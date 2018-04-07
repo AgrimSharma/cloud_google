@@ -92,8 +92,11 @@ def extract_required_entities(text, access_token=None):
         mobile_split = mobile_index.replace("Cell: ","").replace("Cell: ", "").replace("M: ","",).replace("M ","").split()
 
         try:
-            mob = mobile_split.index("+91")
-            mobile_index = ' '.join(mobile_split[mob:mob + 3])
+            if int(mobile_split):
+                pass
+            else:
+                mob = mobile_split.index("+91")
+                mobile_index = ' '.join(mobile_split[mob:mob + 3])
         except Exception:
             # mob = mobile_split.index("91")
             # mobile_index = ''.join(mobile_split[mob:mob + 3])
