@@ -136,9 +136,9 @@ def extract_required_entities(text, access_token=None):
     required_entities = {'ORGANIZATION': '', 'PERSON': '', 'LOCATION': '',
                          "EMAIL": ''.join(extra[index - 1:index + 2]),
                          "MOBILE": mobile.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
-                "Landline:", '').replace(" ", '').replace("Tel.:","").replace("Tel: ","").replace("(","").replace(")",""),
-                             #mobile_index.replace("Cell: ", "").replace("Cell: ", "").replace("M: ", "", ).replace("M ", "").replace(
-                              #  "Landline:", '').replace(" ", ''),
+                "Landline:", '').replace(" ", '').replace("Tel.:","").replace("Tel: ","").replace("(","").replace(")","").\
+        replace("Tel:", "").replace("Mobile:","").replace("/",","),
+
                          "CARD_TEXT": ewst,
                          "DESIGNATION": "",
                          "NAME": ' '.join(name[:2]),
@@ -149,14 +149,14 @@ def extract_required_entities(text, access_token=None):
         t = entity['type']
         if t in required_entities:
             required_entities[t] += entity['name']
-    org_len = len(required_entities["ORGANIZATION"])
-    if org_len > 20:
-        required_entities["ORGANIZATION"] = required_entities["ORGANIZATION"][:37]
-    else:
-        required_entities["ORGANIZATION"] = required_entities["ORGANIZATION"][:20]
-    required_entities['ADDRESS'] = required_entities["LOCATION"]
-    if required_entities["NAME"] not in required_entities["PERSON"]:
-        required_entities["NAME"] = required_entities["PERSON"]
+    # org_len = len(required_entities["ORGANIZATION"])
+    # if org_len > 20:
+    #     required_entities["ORGANIZATION"] = required_entities["ORGANIZATION"][:37]
+    # else:
+    #     required_entities["ORGANIZATION"] = required_entities["ORGANIZATION"][:20]
+    # required_entities['ADDRESS'] = required_entities["LOCATION"]
+    # if required_entities["NAME"] not in required_entities["PERSON"]:
+    #     required_entities["NAME"] = required_entities["PERSON"]
 
     if required_entities["NAME"] in required_entities["PERSON"]:
 
