@@ -17,9 +17,7 @@ token = "AIzaSyBuq_FimnRZwTHrqWtK0JbEdyITH2w4W_s"
 
 
 def detect_text(image_file, access_token=None):
-    print("text")
-    # with open(image_file, 'rb') as image:
-    #     base64_image = base64.b64encode(image.read()).decode()
+
     url = 'https://vision.googleapis.com/v1/images:annotate?key={}'.format(access_token)
     header = {'Content-Type': 'application/json'}
     body = {
@@ -58,11 +56,21 @@ def extract_entities(text, access_token=None):
     return response
 
 
+def name_extractor(name, ewst):
+    for i in name:
+        if i in ewst:
+            start = ewst.index(i)
+            end = ewst.index("\n")
+            names = ewst[start:end]
+            return names
+
+
 def extract_required_entities(text, access_token=None):
     ewst= text
     entities = extract_entities(text, access_token)
     list_text = text.split("\n")
     text = text.splitlines()
+    # Mobile number find block
     mobile_index = []
     r = re.compile(
         r"([0]{1}[6]{1}[-\s]*([1-9]{1}[\s]*){8})|([0]{1}[1-9]{1}[0-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){6})|([0]{1}[1-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){7})|")
@@ -75,9 +83,8 @@ def extract_required_entities(text, access_token=None):
     f = re.compile(r"[\+]{0,1}(\d{10,13}|[\(][\+]{0,1}\d{2,}[\13)]*\d{5,13}|\d{2,6}[\-]{1}\d{2,13}[\-]*\d{3,13})")
 
     for i in list_text:
-        x = i.replace("Landline:", "")
         x = str(i).replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
-            "Landline:", '').replace(" ", '')
+            "Landline:", '').replace(" ", '').replace("Landline:", "")
         val = r.search(x).group() if r.search(x) else ''
         val1 = a.search(x).group() if a.search(x) else ''
         val2 = b.search(x).group() if b.search(x) else ''
@@ -87,24 +94,24 @@ def extract_required_entities(text, access_token=None):
         val6 = f.search(x).group() if f.search(x) else ''
         if val or val1 or val2 or val3 or val4 or val5 or val6:
             mobile_index.append(i)
-
     mobile = ''
     for i in mobile_index:
-        print(i)
+        i = i.replace(" ", "")
         if i.startswith("+91") or i.startswith("Cell: ") or i.startswith("Cell ") or i.startswith("M: ") \
                 or i.startswith("M ") or i.startswith("Landline:") or i.startswith("91") or i.startswith("Tel.:")\
                 or i.startswith("Tel:"):
             mobile = str(i)
+            break
         else:
             x = i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
                 "Landline:", '').replace(" ", '').replace("Tel.:","").replace("Tel: ","").replace("(","").replace(")","")
             mobile = str(x)
-
+            break
+    #name and email
     ne_tree = ne_chunk(pos_tag(word_tokenize(' '.join(text))))
     iob_tagged = tree2conlltags(ne_tree)
     name = []
     extra = []
-    # mobile_list = []
     for text, code, val in iob_tagged:
         if val == 'B-PERSON' or val == "I-PERSON":
             name.append(text)
@@ -125,23 +132,18 @@ def extract_required_entities(text, access_token=None):
 
     else:
         email = ''
-    # if type(mobile_index) == int:
-    #     mobile_index = mobile_index
-    # elif type(mobile_index) == str:
-    #     if mobile_index.startswith("+91"):
-    #         mobile_index = mobile_index
-
+    names = name_extractor(name, ewst)
 
 
     required_entities = {'ORGANIZATION': '', 'PERSON': '', 'LOCATION': '',
                          "EMAIL": ''.join(extra[index - 1:index + 2]),
                          "MOBILE": mobile.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
                 "Landline:", '').replace(" ", '').replace("Tel.:","").replace("Tel: ","").replace("(","").replace(")","").\
-        replace("Tel:", "").replace("Mobile:","").replace("/",","),
+        replace("Tel:", "").replace("Mobile:","").replace("/",",").replace("Cell:",""),
 
                          "CARD_TEXT": ewst,
                          "DESIGNATION": "",
-                         "NAME": ' '.join(name[:2]),
+                         "NAME": names if names else ' '.join(name[:2]),
                          "ADDRESS": ''
                          }
 
@@ -149,14 +151,6 @@ def extract_required_entities(text, access_token=None):
         t = entity['type']
         if t in required_entities:
             required_entities[t] += entity['name']
-    # org_len = len(required_entities["ORGANIZATION"])
-    # if org_len > 20:
-    #     required_entities["ORGANIZATION"] = required_entities["ORGANIZATION"][:37]
-    # else:
-    #     required_entities["ORGANIZATION"] = required_entities["ORGANIZATION"][:20]
-    # required_entities['ADDRESS'] = required_entities["LOCATION"]
-    # if required_entities["NAME"] not in required_entities["PERSON"]:
-    #     required_entities["NAME"] = required_entities["PERSON"]
 
     if required_entities["NAME"] in required_entities["PERSON"]:
 
@@ -164,11 +158,15 @@ def extract_required_entities(text, access_token=None):
             designation = ' '.join(required_entities["PERSON"].split(required_entities["NAME"]))
         else:
             required_entities["PERSON"].split(required_entities["NAME"])
-        # required_entities["PERSON"] =
     else:
         designation = ""
     required_entities["DESIGNATION"] = designation
+    desg = required_entities["DESIGNATION"]
+    if desg == " ":
+        start = ewst.index("\n")
+        end = ewst.index("\n",start+1)
 
+        required_entities["DESIGNATION"] = ewst[start+1:end]
     return required_entities
 
 
@@ -180,16 +178,7 @@ def predict():
         redata = json.loads(flask.request.data)
 
         image = redata['image']
-        # image = request.files["image"].read()
-        # image_name = request.files["image"].filename
-        # images = Image.open(io.BytesIO(image))
-        # if ".png" in image_name:
-        #     name = "images/image_{}.png".format(datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S"))
-        #
-        # else:
-        #     name = "images/image_{}.jpeg".format(datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S"))
 
-        # images.save(name)
         text = detect_text(str(image), access_token=token)
         if text == "":
             data = {"success": False}
@@ -197,7 +186,7 @@ def predict():
             res = extract_required_entities(text=str(text), access_token=token)
 
             data = res
-            print(data)
+            # print(data)
     else:
         data = {"success": False}
 
