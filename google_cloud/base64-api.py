@@ -63,8 +63,37 @@ def extract_required_entities(text, access_token=None):
     entities = extract_entities(text, access_token)
     list_text = text.split("\n")
     text = text.splitlines()
+    mobile_index = ''
 
-    # print(text)
+    r = re.compile(
+        r"([0]{1}[6]{1}[-\s]*([1-9]{1}[\s]*){8})|([0]{1}[1-9]{1}[0-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){6})|([0]{1}[1-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){7})|")
+    a = re.compile(r"^07([\d]{3})[(\D\s)]?[\d]{3}[(\D\s)]?[\d]{3}$")
+    b = re.compile(
+        r"([0]{1}[6]{1}[-\s]*([1-9]{1}[\s]*){8})|([0]{1}[1-9]{1}[0-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){6})|([0]{1}[1-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){7})")
+    c = re.compile(r"^((?:\+27|27)|0)(=72|82|73|83|74|84)(\d{7})$")
+    d = re.compile(r"[\+]{0,1}(\d{10,13}|[\(][\+]{0,1}\d{2,}[\13)]*\d{5,13}|\d{2,6}[\-]{1}\d{2,13}[\-]*\d{3,13})")
+    e = re.compile(r"(\+91(-)?|91(-)?|0(-)?)?(9)[0-9]{9}")
+    f = re.compile(r"[\+]{0,1}(\d{10,13}|[\(][\+]{0,1}\d{2,}[\13)]*\d{5,13}|\d{2,6}[\-]{1}\d{2,13}[\-]*\d{3,13})")
+
+    for i in list_text:
+        if "+91" in i:
+            mobile_index = i
+            break
+        else:
+            x = i.replace("Landline:", "")
+            x = str(i).replace("Cell: ", "").replace("Cell: ", "").replace("M: ", "", ).replace("M ", "").replace(
+                "Landline:", '').replace(" ", '')
+            val = r.search(x).group() if r.search(x) else ''
+            val1 = a.search(x).group() if a.search(x) else ''
+            val2 = b.search(x).group() if b.search(x) else ''
+            val3 = c.search(x).group() if c.search(x) else ''
+            val4 = d.search(x).group() if d.search(x) else ''
+            val5 = e.search(x).group() if e.search(x) else ''
+            val6 = f.search(x).group() if f.search(x) else ''
+            if val or val1 or val2 or val3 or val4 or val5 or val6:
+                mobile_index = x
+                break
+
     ne_tree = ne_chunk(pos_tag(word_tokenize(' '.join(text))))
     iob_tagged = tree2conlltags(ne_tree)
     name = []
@@ -75,45 +104,8 @@ def extract_required_entities(text, access_token=None):
             name.append(text)
         if val == 'O':
             extra.append(text)
-        # if (code == 'CD' or code == "NN" or code == "JJ") and val == 'O':
-        #     mobile_list.append(text)
-    # print(mobile_list)
-    # import pdb;pdb.set_trace()
-
-    mobile_index = 0
-    for i in list_text:
-        if "+91" in i:
-            mobile_index = i
-            break
-    print(mobile_index)
-    if mobile_index.startswith("+91"):
-        mobile_index = mobile_index
-    else:
-        mobile_split = mobile_index.replace("Cell: ","").replace("Cell: ", "").replace("M: ","",).replace("M ","").split()
-
-        try:
-            if int(mobile_split):
-                pass
-            else:
-                mob = mobile_split.index("+91")
-                mobile_index = ' '.join(mobile_split[mob:mob + 3])
-        except Exception:
-            # mob = mobile_split.index("91")
-            # mobile_index = ''.join(mobile_split[mob:mob + 3])
-        # else:
-            mobile_index = mobile_index
-
-    # print(' '.join(name[:2]))
-    # print(' '.join(extra[:3]))
     index = extra.index("@")
-    # print(''.join(extra[index - 1:index + 2]))
-    # print(mobile_list[mobile_index: mobile_index + 2])
-
-    # import pdb;pdb.set_trace()
-    # email = re.search(r"[\w\.-]+@[\w\.-]+", t)
     email = list(filter(lambda x: re.search(r"[\w\.-]+@[\w\.-]+", x), text))
-    mobile = list(filter(lambda x: re.search(r"(\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}|\(\d{3}\)\s*\d{3}[-\.\s]??\d{4}|\d{3}[-\.\s]??\d{4})", str(x).replace("-", " ")), text))
-    # print(mobile)
     if email:
         email = email[0]
         if "Email: " in email:
@@ -127,34 +119,26 @@ def extract_required_entities(text, access_token=None):
 
     else:
         email = ''
-    if mobile:
-        mobile = mobile[0]
-        if "Cell: " in mobile:
-            mobile = re.split(r"Cell: ", mobile)[1]
-        elif "M: " in mobile:
-            mobile = re.split(r"M: ", mobile)[1]
-        elif "M " in mobile:
-            mobile = re.split(r"M ", mobile)[1]
-        if "Cell: " in mobile:
-            mobile = re.split(r"Cell: ", mobile)[1]
-        else:
-            mobile = mobile
-    else:
-        mobile = mobile
-    # mobile = mobile[0] if len(mobile)> 0 else ''
+
     required_entities = {'ORGANIZATION': '', 'PERSON': '', 'LOCATION': '',
                          "EMAIL": ''.join(extra[index - 1:index + 2]),
-                         "MOBILE": mobile_index.replace("Cell: ","").replace("Cell: ", "").replace("M: ","",).replace("M ",""),
+                         "MOBILE": mobile_index.replace("Cell: ", "").replace("Cell: ", "").replace("M: ", "", ).replace("M ", "").replace(
+                                "Landline:", '').replace(" ", ''),
                          "CARD_TEXT": ewst,
-                         "DESIGNATION": '',#text[1],
-                        "NAME": ' '.join(name[:2]),
-                         "ADDRESS": ''#text[2]
+                         "DESIGNATION": "",
+                         "NAME": ' '.join(name[:2]),
+                         "ADDRESS": ''
                          }
 
     for entity in entities['entities']:
         t = entity['type']
         if t in required_entities:
             required_entities[t] += entity['name']
+
+    required_entities['ADDRESS'] = required_entities["LOCATION"]
+
+    designation = required_entities["PERSON"].split(required_entities["NAME"])[1]
+    required_entities["DESIGNATION"] = designation
 
     return required_entities
 
