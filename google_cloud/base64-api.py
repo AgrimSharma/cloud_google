@@ -87,16 +87,17 @@ def extract_required_entities(text, access_token=None):
         val6 = f.search(x).group() if f.search(x) else ''
         if val or val1 or val2 or val3 or val4 or val5 or val6:
             mobile_index.append(i)
-    
+
     mobile = ''
     for i in mobile_index:
         print(i)
         if i.startswith("+91") or i.startswith("Cell: ") or i.startswith("Cell ") or i.startswith("M: ") \
-                or i.startswith("M ") or i.startswith("Landline:") or i.startswith("91"):
+                or i.startswith("M ") or i.startswith("Landline:") or i.startswith("91") or i.startswith("Tel.:")\
+                or i.startswith("Tel:"):
             mobile = str(i)
         else:
             x = i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
-                "Landline:", '').replace(" ", '')
+                "Landline:", '').replace(" ", '').replace("Tel.:","").replace("Tel: ").replace("(","").replace(")","")
             mobile = str(x)
 
     ne_tree = ne_chunk(pos_tag(word_tokenize(' '.join(text))))
@@ -135,7 +136,7 @@ def extract_required_entities(text, access_token=None):
     required_entities = {'ORGANIZATION': '', 'PERSON': '', 'LOCATION': '',
                          "EMAIL": ''.join(extra[index - 1:index + 2]),
                          "MOBILE": mobile.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
-                "Landline:", '').replace(" ", ''),
+                "Landline:", '').replace(" ", '').replace("Tel.:","").replace("Tel: ").replace("(","").replace(")",""),
                              #mobile_index.replace("Cell: ", "").replace("Cell: ", "").replace("M: ", "", ).replace("M ", "").replace(
                               #  "Landline:", '').replace(" ", ''),
                          "CARD_TEXT": ewst,
