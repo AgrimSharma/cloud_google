@@ -138,9 +138,13 @@ def extract_required_entities(text, access_token=None):
     required_entities['ADDRESS'] = required_entities["LOCATION"]
     if required_entities["NAME"] not in required_entities["PERSON"]:
         required_entities["NAME"] = required_entities["PERSON"]
-    
+
     if required_entities["NAME"] in required_entities["PERSON"]:
-        designation = required_entities["PERSON"].split(required_entities["NAME"])[1]
+
+        if len(required_entities["PERSON"].split(required_entities["NAME"])) > 1:
+            designation =required_entities["PERSON"].split(required_entities["NAME"])[1]
+        else:
+            required_entities["PERSON"].split(required_entities["NAME"])
         # required_entities["PERSON"] =
     else:
         designation = ""
