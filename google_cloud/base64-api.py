@@ -63,8 +63,7 @@ def extract_required_entities(text, access_token=None):
     entities = extract_entities(text, access_token)
     list_text = text.split("\n")
     text = text.splitlines()
-    mobile_index = ''
-
+    mobile_index = []
     r = re.compile(
         r"([0]{1}[6]{1}[-\s]*([1-9]{1}[\s]*){8})|([0]{1}[1-9]{1}[0-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){6})|([0]{1}[1-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){7})|")
     a = re.compile(r"^07([\d]{3})[(\D\s)]?[\d]{3}[(\D\s)]?[\d]{3}$")
@@ -76,23 +75,29 @@ def extract_required_entities(text, access_token=None):
     f = re.compile(r"[\+]{0,1}(\d{10,13}|[\(][\+]{0,1}\d{2,}[\13)]*\d{5,13}|\d{2,6}[\-]{1}\d{2,13}[\-]*\d{3,13})")
 
     for i in list_text:
-        if "+91" in i:
-            mobile_index = i
-            break
+        x = i.replace("Landline:", "")
+        x = str(i).replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
+            "Landline:", '').replace(" ", '')
+        val = r.search(x).group() if r.search(x) else ''
+        val1 = a.search(x).group() if a.search(x) else ''
+        val2 = b.search(x).group() if b.search(x) else ''
+        val3 = c.search(x).group() if c.search(x) else ''
+        val4 = d.search(x).group() if d.search(x) else ''
+        val5 = e.search(x).group() if e.search(x) else ''
+        val6 = f.search(x).group() if f.search(x) else ''
+        if val or val1 or val2 or val3 or val4 or val5 or val6:
+            mobile_index.append(i)
+    
+    mobile = ''
+    for i in mobile_index:
+        print(i)
+        if i.startswith("+91") or i.startswith("Cell: ") or i.startswith("Cell ") or i.startswith("M: ") \
+                or i.startswith("M ") or i.startswith("Landline:") or i.startswith("91"):
+            mobile = str(i)
         else:
-            x = i.replace("Landline:", "")
-            x = str(i).replace("Cell: ", "").replace("Cell: ", "").replace("M: ", "", ).replace("M ", "").replace(
+            x = i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
                 "Landline:", '').replace(" ", '')
-            val = r.search(x).group() if r.search(x) else ''
-            val1 = a.search(x).group() if a.search(x) else ''
-            val2 = b.search(x).group() if b.search(x) else ''
-            val3 = c.search(x).group() if c.search(x) else ''
-            val4 = d.search(x).group() if d.search(x) else ''
-            val5 = e.search(x).group() if e.search(x) else ''
-            val6 = f.search(x).group() if f.search(x) else ''
-            if val or val1 or val2 or val3 or val4 or val5 or val6:
-                mobile_index = x
-                break
+            mobile = str(x)
 
     ne_tree = ne_chunk(pos_tag(word_tokenize(' '.join(text))))
     iob_tagged = tree2conlltags(ne_tree)
@@ -119,11 +124,20 @@ def extract_required_entities(text, access_token=None):
 
     else:
         email = ''
+    # if type(mobile_index) == int:
+    #     mobile_index = mobile_index
+    # elif type(mobile_index) == str:
+    #     if mobile_index.startswith("+91"):
+    #         mobile_index = mobile_index
+
+
 
     required_entities = {'ORGANIZATION': '', 'PERSON': '', 'LOCATION': '',
                          "EMAIL": ''.join(extra[index - 1:index + 2]),
-                         "MOBILE": mobile_index.replace("Cell: ", "").replace("Cell: ", "").replace("M: ", "", ).replace("M ", "").replace(
-                                "Landline:", '').replace(" ", ''),
+                         "MOBILE": mobile.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
+                "Landline:", '').replace(" ", ''),
+                             #mobile_index.replace("Cell: ", "").replace("Cell: ", "").replace("M: ", "", ).replace("M ", "").replace(
+                              #  "Landline:", '').replace(" ", ''),
                          "CARD_TEXT": ewst,
                          "DESIGNATION": "",
                          "NAME": ' '.join(name[:2]),
@@ -134,7 +148,11 @@ def extract_required_entities(text, access_token=None):
         t = entity['type']
         if t in required_entities:
             required_entities[t] += entity['name']
-
+    org_len = len(required_entities["ORGANIZATION"])
+    if org_len > 20:
+        required_entities["ORGANIZATION"] = required_entities["ORGANIZATION"][:37]
+    else:
+        required_entities["ORGANIZATION"] = required_entities["ORGANIZATION"][:20]
     required_entities['ADDRESS'] = required_entities["LOCATION"]
     if required_entities["NAME"] not in required_entities["PERSON"]:
         required_entities["NAME"] = required_entities["PERSON"]
@@ -142,7 +160,7 @@ def extract_required_entities(text, access_token=None):
     if required_entities["NAME"] in required_entities["PERSON"]:
 
         if len(required_entities["PERSON"].split(required_entities["NAME"])) > 1:
-            designation =required_entities["PERSON"].split(required_entities["NAME"])[1]
+            designation = ' '.join(required_entities["PERSON"].split(required_entities["NAME"]))
         else:
             required_entities["PERSON"].split(required_entities["NAME"])
         # required_entities["PERSON"] =
@@ -157,7 +175,7 @@ def extract_required_entities(text, access_token=None):
 def predict():
     if request.method == "POST":
         print("Read the form data!!!!")
-        # import pdb;pdb.set_trace()
+
         redata = json.loads(flask.request.data)
 
         image = redata['image']
