@@ -241,6 +241,19 @@ def extract_required_entities(text, access_token=None):
                 required_entities["ORGANIZATION"] = org.upper()
             except Exception:
                 pass
+    else:
+        org = required_entities["ORGANIZATION"]
+        if org not in ewst:
+            email = required_entities["EMAIL"]
+        if "gmail" in email or "yahoo" in email or "hotmail" in email or "ymail" in email:
+            pass
+        else:
+            try:
+                org = email.split('@')[1]
+                org = org.split(".")[0]
+                required_entities["ORGANIZATION"] = org.upper()
+            except Exception:
+                pass
 
         # mstart = ewst.index(required_entities["MOBILE"])
         # mend =  ewst.index("\n", mstart+1)
