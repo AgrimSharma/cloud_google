@@ -103,18 +103,29 @@ def mobile_extractor(list_text):
         if val or val1 or val2 or val3 or val4 or val5 or val6:
             mobile_index.append(i)
     # mobile = ''
+    print(mobile_index)
     for i in mobile_index:
-        i = i.replace(" ", "")
+        # i = i.replace(" ", "")
         if i.startswith("+91") or i.startswith("Cell: ") or i.startswith("Cell ") or i.startswith("M: ") \
                 or i.startswith("M ") or i.startswith("Landline:") or i.startswith("91") or i.startswith("Tel.:") \
-                or i.startswith("Tel:"):
-            return str(i)
-            # break
-        else:
-            x = i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
+                or i.startswith("Tel:") or i.startswith("M ") :
+            return i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
                 "Landline:", '').replace(" ", '').replace("Tel.:", "").replace("Tel: ", "").replace("(", "").replace(
                 ")", "")
-            return str(x)
+        else:
+            com = re.compile(r"[a-zA-Z]{1,8}")
+            tel = com.search(i)
+            try:
+                if tel.group() and tel.group() in ["M", "Cell", "Tel", "Landline", "Mobile", "C"]:
+                    return i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
+                    "Landline:", '').replace(" ", '').replace("Tel.:", "").replace("Tel: ", "").replace("(", "").replace(
+                    ")", "")
+            except Exception:
+                return i
+            # x = i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
+            #     "Landline:", '').replace(" ", '').replace("Tel.:", "").replace("Tel: ", "").replace("(", "").replace(
+            #     ")", "")
+            # return str(x)
 
 
 def extract_required_entities(text, access_token=None):
@@ -136,7 +147,7 @@ def extract_required_entities(text, access_token=None):
             name.append(text)
         if val == 'O':
             extra.append(text)
-    index = extra.index("@")
+
     email = list(filter(lambda x: re.search(r"[\w\.-]+@[\w\.-]+", x), text))
     if email:
         email = email[0]
@@ -151,13 +162,18 @@ def extract_required_entities(text, access_token=None):
 
     else:
         email = ''
+
+    try:
+        index = extra.index("@")
+    except Exception:
+        index = email
     names = name_extractor(name, ewst)
 
     required_entities = {
         'ORGANIZATION': '',
         'PERSON': '',
         'LOCATION': '',
-        "EMAIL": ''.join(extra[index - 1:index + 2]),
+        "EMAIL": ''.join(extra[index - 1:index + 2]) if type(index) == int else index,
         "MOBILE": mobile.replace("Cell: ", "").replace("Cell ", "").\
             replace("M: ", "", ).replace("M ", "").\
             replace("Landline:", '').replace(" ", '').\
@@ -188,15 +204,18 @@ def extract_required_entities(text, access_token=None):
                 designation = ewst[start:end]
     else:
         designation = ""
-    required_entities["DESIGNATION"] = designation
-    desg = required_entities["DESIGNATION"]
-    if desg == "" or desg == required_entities["NAME"]:
-        start = ewst.index("\n")
-        end = ewst.index("\n", start+1)
 
-        required_entities["DESIGNATION"] = ewst[start+1:end].strip()
+    if designation == "" or designation == required_entities["NAME"]:
+        start = ewst.index("\n")
+        end = ewst.index("\n", start + 1)
+
+        required_entities["DESIGNATION"] = ewst[start + 1:end].strip()
+    elif designation:
+        required_entities["DESIGNATION"] = designation
     else:
-        required_entities["DESIGNATION"] = ''
+        required_entities["DESIGNATION"] = ""
+    # required_entities["DESIGNATION"] = designation
+
     if required_entities["ADDRESS"] == "":
         required_entities["ADDRESS"] = required_entities["ORGANIZATION"]
     else:
