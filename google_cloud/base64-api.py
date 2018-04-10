@@ -66,14 +66,15 @@ def name_extractor(name, ewst):
 
 
 def website_extract(ewst):
-    start = ewst.index("www.")
-    if start:
-        try:
+
+    try:
+        start = ewst.index("www.")
+        if start:
             end = ewst.index("\n", start + 1)
             return ewst[start:end]
-        except Exception:
+        else:
             return ewst[start:]
-    else:
+    except Exception:
         return ""
 
 
