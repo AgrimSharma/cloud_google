@@ -65,17 +65,17 @@ def name_extractor(name, ewst):
             return names
 
 
-def website_extract(ewst):
-
-    try:
-        start = ewst.index("www.")
-        if start:
-            end = ewst.index("\n", start + 1)
-            return ewst[start:end]
-        else:
-            return ewst[start:]
-    except Exception:
-        return ""
+# def website_extract(ewst):
+#
+#     try:
+#         start = ewst.index("www.")
+#         if start:
+#             end = ewst.index("\n", start + 1)
+#             return ewst[start:end]
+#         else:
+#             return ewst[start:]
+#     except Exception:
+#         return ""
 
 
 def mobile_extractor(list_text):
@@ -110,8 +110,8 @@ def mobile_extractor(list_text):
                 or i.startswith("M ") or i.startswith("Landline:") or i.startswith("91") or i.startswith("Tel.:") \
                 or i.startswith("Tel:") or i.startswith("M ") or i.startswith("Mobile") or i.startswith("Mobile (IND):"):
             return i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
-                "Landline:", '').replace("Tel.:", "").replace("Tel: ", "").replace("Mobile (IND)","").replace(" ", '').replace("(", "").replace(
-                ")", "")
+                "Landline:", '').replace("Tel.:", "").replace("Tel: ", "").replace("Mobile (IND)","")
+
         else:
             com = re.compile(r"[a-zA-Z]{1,8}")
             tel = com.search(i)
@@ -119,8 +119,7 @@ def mobile_extractor(list_text):
                 if tel.group() and tel.group() in ["M", "Cell", "Tel", "Landline", "Mobile", "C"]:
                     return i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
                     "Landline:", '').replace("Tel.:", "").replace("Tel: ", "").\
-                        replace("Mobile (IND):","").replace("Mobile:","").replace("Mobile: ","").replace("(", "").replace(
-                    ")", "").replace(" ", '')
+                        replace("Mobile (IND):","").replace("Mobile:","").replace("Mobile: ","")
             except Exception:
                 return i
                     # i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
@@ -173,32 +172,32 @@ def extract_required_entities(text, access_token=None):
         index = email
     names = name_extractor(name, ewst)
 
-    required_entities = {
-        'ORGANIZATION': '',
-        'PERSON': '',
-        'LOCATION': '',
-        "EMAIL": ''.join(extra[index - 1:index + 2]) if type(index) == int else index,
-        "MOBILE": mobile.replace("Cell: ", "").replace("Cell ", "").\
-            replace("M: ", "", ).replace("M ", "").\
-            replace("Landline:", '').replace(" ", '').\
-            replace("Tel.:","").replace("Tel: ","").\
-            replace("(","").replace(")","").\
-            replace("Tel:", "").replace("Mobile:","").\
-            replace("/",",").replace("Cell:","").replace("Mobile (IND):","") \
-            .replace("Mobile ", "").replace("Mobile:","")if mobile else "",
-        "CARD_TEXT": ewst,
-        "DESIGNATION": "",
-        "NAME": names if names else ' '.join(name[:2]),
-        "ADDRESS": '',
-        "WEBSITE": website_extract(ewst)
-    }
 
     for entity in entities['entities']:
+        required_entities = {
+            'ORGANIZATION': '',
+            'PERSON': '',
+            # 'LOCATION': '',
+            "EMAIL": ''.join(extra[index - 1:index + 2]) if type(index) == int else index,
+            "MOBILE": mobile.replace("Cell: ", "").replace("Cell ", ""). \
+                replace("M: ", "", ).replace("M ", ""). \
+                replace("Landline:", ''). \
+                replace("Tel.:","").replace("Tel: ",""). \
+                # replace("(","").replace(")",""). \
+                replace("Tel:", "").replace("Mobile:",""). \
+                replace("/",",").replace("Cell:","").replace("Mobile (IND):","") \
+                .replace("Mobile ", "").replace("Mobile:","")if mobile else "",
+            "CARD_TEXT": ewst,
+            "DESIGNATION": "",
+            "NAME": names if names else ' '.join(name[:2]),
+            "ADDRESS": '',
+            # "WEBSITE": website_extract(ewst)
+        }
         t = entity['type']
         if t in required_entities:
             required_entities[t] += entity['name']
-
-    if required_entities["NAME"] == required_entities["PERSON"]:
+    print(required_entities)
+    if (required_entities["NAME"] == required_entities["PERSON"]) or required_entities["PERSON"] == "":
         start = ewst.index(required_entities["NAME"])
         end = ewst.index("\n", start+1)
         start_new = ewst.index("\n", end+1)
