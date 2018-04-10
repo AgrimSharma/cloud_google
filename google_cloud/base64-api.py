@@ -180,7 +180,7 @@ def extract_required_entities(text, access_token=None):
             replace("Tel.:","").replace("Tel: ","").\
             replace("(","").replace(")","").\
             replace("Tel:", "").replace("Mobile:","").\
-            replace("/",",").replace("Cell:",""),
+            replace("/",",").replace("Cell:","") if mobile else "",
         "CARD_TEXT": ewst,
         "DESIGNATION": "",
         "NAME": names if names else ' '.join(name[:2]),
