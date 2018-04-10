@@ -175,22 +175,27 @@ def extract_required_entities(text, access_token=None):
         t = entity['type']
         if t in required_entities:
             required_entities[t] += entity['name']
-
     if required_entities["NAME"] in required_entities["PERSON"]:
 
         if len(required_entities["PERSON"].split(required_entities["NAME"])) > 1:
-            designation = ' '.join(required_entities["PERSON"].split(required_entities["NAME"]))
+            designation = required_entities["PERSON"].split(required_entities["NAME"])[1]
+            if len(designation.split()) > 1:
+                designation = designation
+            else:
+                start = ewst.index(designation.strip())
+                end = ewst.index("\n", start+1)
+                designation = ewst[start:end]
         else:
-            required_entities["PERSON"].split(required_entities["NAME"])
+            designation = required_entities["PERSON"].split(required_entities["NAME"])
     else:
         designation = ""
     required_entities["DESIGNATION"] = designation
-    desg = required_entities["DESIGNATION"]
-    if desg == " ":
-        start = ewst.index("\n")
-        end = ewst.index("\n",start+1)
-
-        required_entities["DESIGNATION"] = ewst[start+1:end].strip()
+    # desg = required_entities["DESIGNATION"]
+    # if desg == " ":
+    #     start = ewst.index("\n")
+    #     end = ewst.index("\n",start+1)
+    #
+    #     required_entities["DESIGNATION"] = ewst[start+1:end].strip()
     if required_entities["ADDRESS"] == "":
         required_entities["ADDRESS"] = required_entities["ORGANIZATION"]
     else:
