@@ -186,17 +186,17 @@ def extract_required_entities(text, access_token=None):
                 start = ewst.index(designation.strip())
                 end = ewst.index("\n", start+1)
                 designation = ewst[start:end]
-        else:
-            designation = required_entities["PERSON"].split(required_entities["NAME"])
     else:
         designation = ""
     required_entities["DESIGNATION"] = designation
-    # desg = required_entities["DESIGNATION"]
-    # if desg == " ":
-    #     start = ewst.index("\n")
-    #     end = ewst.index("\n",start+1)
-    #
-    #     required_entities["DESIGNATION"] = ewst[start+1:end].strip()
+    desg = required_entities["DESIGNATION"]
+    if desg == "" or desg == required_entities["NAME"]:
+        start = ewst.index("\n")
+        end = ewst.index("\n", start+1)
+
+        required_entities["DESIGNATION"] = ewst[start+1:end].strip()
+    else:
+        required_entities["DESIGNATION"] = ''
     if required_entities["ADDRESS"] == "":
         required_entities["ADDRESS"] = required_entities["ORGANIZATION"]
     else:
