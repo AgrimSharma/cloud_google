@@ -111,6 +111,8 @@ def mobile_extractor(list_text):
                 or i.startswith("Tel:") or i.startswith("M ") or i.startswith("Mobile") or i.startswith("Mobile (IND):"):
             return i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
                 "Landline:", '').replace("Tel.:", "").replace("Tel: ", "").replace("Mobile (IND)","")
+        elif i.startswith("011"):
+            pass
 
         else:
             com = re.compile(r"[a-zA-Z]{1,8}")
@@ -139,14 +141,14 @@ def extract_required_entities(text, access_token=None):
 
     # Mobile number find block
     mobile = mobile_extractor(list_text)
-
+    print(mobile)
     #name and email
     ne_tree = ne_chunk(pos_tag(word_tokenize(' '.join(text))))
     iob_tagged = tree2conlltags(ne_tree)
     name = []
     extra = []
     for text, code, val in iob_tagged:
-        if val == 'B-PERSON' or val == "I-PERSON":
+        if val == 'B-PERSON' or val == "I-PERSON" or val == "B-ORGANIZATION" :
             name.append(text)
         if val == 'O':
             extra.append(text)
@@ -224,10 +226,10 @@ def extract_required_entities(text, access_token=None):
         required_entities["DESIGNATION"] = designation
     else:
         required_entities["DESIGNATION"] = ""
-
+    print(required_entities["ORGANIZATION"])
     if required_entities["ORGANIZATION"] == "":
         for i in list_text:
-            if "Ltd" in i or "Limited" in i or "LLP" in i:
+            if "Ltd" in i or "Limited" in i or "LLP" in i or "LTD" in i:
                 required_entities["ORGANIZATION"] = i
 
     if required_entities["ORGANIZATION"] == "":
