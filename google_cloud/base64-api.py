@@ -224,8 +224,28 @@ def extract_required_entities(text, access_token=None):
         required_entities["DESIGNATION"] = designation
     else:
         required_entities["DESIGNATION"] = ""
-    # required_entities["DESIGNATION"] = designation
 
+    if required_entities["ORGANIZATION"] == "":
+        for i in list_text:
+            if "Ltd" in i or "Limited" in i or "LLP" in i:
+                required_entities["ORGANIZATION"] = i
+
+    if required_entities["ORGANIZATION"] == "":
+        email = required_entities["EMAIL"]
+        if "gmail" in email or "yahoo" in email or "hotmail" in email or "ymail" in email:
+            pass
+        else:
+            try:
+                org = email.split('@')[1]
+                org = org.split(".")[0]
+                required_entities["ORGANIZATION"] = org.upper()
+            except Exception:
+                pass
+
+        # mstart = ewst.index(required_entities["MOBILE"])
+        # mend =  ewst.index("\n", mstart+1)
+        # nend = ewst.index("\n", mend+1)
+        # required_entities['ORGANIZATION'] = ewst[mend+1:nend]
     if required_entities["ADDRESS"] == "":
         required_entities["ADDRESS"] = required_entities["ORGANIZATION"]
     else:
