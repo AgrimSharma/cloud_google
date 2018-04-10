@@ -65,12 +65,19 @@ def name_extractor(name, ewst):
             return names
 
 
-def extract_required_entities(text, access_token=None):
-    ewst= text
-    entities = extract_entities(text, access_token)
-    list_text = text.split("\n")
-    text = text.splitlines()
-    # Mobile number find block
+def website_extract(ewst):
+    start = ewst.index("www.")
+    if start:
+        try:
+            end = ewst.index("\n", start + 1)
+            return ewst[start:end]
+        except Exception:
+            return ewst[start:]
+    else:
+        return ""
+
+
+def mobile_extractor(list_text):
     mobile_index = []
     r = re.compile(
         r"([0]{1}[6]{1}[-\s]*([1-9]{1}[\s]*){8})|([0]{1}[1-9]{1}[0-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){6})|([0]{1}[1-9]{1}[0-9]{1}[-\s]*([1-9]{1}[\s]*){7})|")
@@ -94,19 +101,30 @@ def extract_required_entities(text, access_token=None):
         val6 = f.search(x).group() if f.search(x) else ''
         if val or val1 or val2 or val3 or val4 or val5 or val6:
             mobile_index.append(i)
-    mobile = ''
+    # mobile = ''
     for i in mobile_index:
         i = i.replace(" ", "")
         if i.startswith("+91") or i.startswith("Cell: ") or i.startswith("Cell ") or i.startswith("M: ") \
-                or i.startswith("M ") or i.startswith("Landline:") or i.startswith("91") or i.startswith("Tel.:")\
+                or i.startswith("M ") or i.startswith("Landline:") or i.startswith("91") or i.startswith("Tel.:") \
                 or i.startswith("Tel:"):
-            mobile = str(i)
-            break
+            return str(i)
+            # break
         else:
             x = i.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
-                "Landline:", '').replace(" ", '').replace("Tel.:","").replace("Tel: ","").replace("(","").replace(")","")
-            mobile = str(x)
-            break
+                "Landline:", '').replace(" ", '').replace("Tel.:", "").replace("Tel: ", "").replace("(", "").replace(
+                ")", "")
+            return str(x)
+
+
+def extract_required_entities(text, access_token=None):
+    ewst= text
+    entities = extract_entities(text, access_token)
+    list_text = text.split("\n")
+    text = text.splitlines()
+
+    # Mobile number find block
+    mobile = mobile_extractor(list_text)
+
     #name and email
     ne_tree = ne_chunk(pos_tag(word_tokenize(' '.join(text))))
     iob_tagged = tree2conlltags(ne_tree)
@@ -134,18 +152,24 @@ def extract_required_entities(text, access_token=None):
         email = ''
     names = name_extractor(name, ewst)
 
-
-    required_entities = {'ORGANIZATION': '', 'PERSON': '', 'LOCATION': '',
-                         "EMAIL": ''.join(extra[index - 1:index + 2]),
-                         "MOBILE": mobile.replace("Cell: ", "").replace("Cell ", "").replace("M: ", "", ).replace("M ", "").replace(
-                "Landline:", '').replace(" ", '').replace("Tel.:","").replace("Tel: ","").replace("(","").replace(")","").\
-        replace("Tel:", "").replace("Mobile:","").replace("/",",").replace("Cell:",""),
-
-                         "CARD_TEXT": ewst,
-                         "DESIGNATION": "",
-                         "NAME": names if names else ' '.join(name[:2]),
-                         "ADDRESS": ''
-                         }
+    required_entities = {
+        'ORGANIZATION': '',
+        'PERSON': '',
+        'LOCATION': '',
+        "EMAIL": ''.join(extra[index - 1:index + 2]),
+        "MOBILE": mobile.replace("Cell: ", "").replace("Cell ", "").\
+            replace("M: ", "", ).replace("M ", "").\
+            replace("Landline:", '').replace(" ", '').\
+            replace("Tel.:","").replace("Tel: ","").\
+            replace("(","").replace(")","").\
+            replace("Tel:", "").replace("Mobile:","").\
+            replace("/",",").replace("Cell:",""),
+        "CARD_TEXT": ewst,
+        "DESIGNATION": "",
+        "NAME": names if names else ' '.join(name[:2]),
+        "ADDRESS": '',
+        "WEBSITE": website_extract(ewst)
+    }
 
     for entity in entities['entities']:
         t = entity['type']
@@ -166,7 +190,11 @@ def extract_required_entities(text, access_token=None):
         start = ewst.index("\n")
         end = ewst.index("\n",start+1)
 
-        required_entities["DESIGNATION"] = ewst[start+1:end]
+        required_entities["DESIGNATION"] = ewst[start+1:end].strip()
+    if required_entities["ADDRESS"] == "":
+        required_entities["ADDRESS"] = required_entities["ORGANIZATION"]
+    else:
+        required_entities["ADDRESS"] = required_entities["ADDRESS"]
     return required_entities
 
 
@@ -195,12 +223,3 @@ def predict():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8002)
-
-
-
-
-
-# Tree('S', [Tree('PERSON', [('Himanshu', 'NNP')]), Tree('PERSON', [('Gogia', 'NNP')]), ('Sr.', 'NNP'), ('Business', 'NNP'), ('Analyst', 'NNP'), ('A-12/3', 'NNP'), (',', ','), ('Phase', 'NNP'), ('1', 'CD'), (',', ','), Tree('PERSON', [('Naraina', 'NNP'), ('Industrial', 'NNP'), ('Area', 'NNP'), ('New', 'NNP')]), ('Delhi', 'NNP'), ('110028', 'CD'), Tree('ORGANIZATION', [('INDIA', 'NNP')]), ('|', 'NNP'), ('+91', 'VBD'), ('11', 'CD'), ('49194903', 'CD'), ('E', 'NNP'), ('himanshu.gogia', 'NN'), ('@', 'NNP'), ('sirez.com', 'NN'), ('M', 'NNP'), ('+91', 'VBD'), ('95555', 'CD'), ('29419', 'CD'), ('W', 'NNP'), ('www.sirez.com', 'NN')])
-
-
-
