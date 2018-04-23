@@ -1,0 +1,49 @@
+<html>
+    <head>
+        <script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+
+    </head>
+    <body style="margin-top:10px;">
+        <div class="container-fluid">
+            <div class="row">
+            <!--<strong>{{ name }}</strong>-->
+            </div>
+            {% if message == 'Success' %}
+            <div class="row"><</div>
+            <div class="col-md-6">
+
+                <table class="table table-bordered">
+                    <thead class="thead-dark">
+                    <tr>
+                        <th scope="col" style="text-align:center;"> <strong>SNo</strong></th>
+                        <th style="text-align:center;"><strong>Labels</strong></th>
+                        <th style="text-align:center;"><strong>Percentage</strong></th>
+
+                    </tr></thead>
+                    <tbody>
+
+            {% for i in name %}
+
+                <tr>
+                    <th scope="row" style="text-align: center;" >{{loop.index}}</th>
+                    <td style="text-align:center;">{{ i.description }}</td>
+                    <td style="text-align:center;">{{ i.percentage }}%</td>
+
+                </tr>
+
+                <!--<img class="col-md-4" src="{{i.url}}"/>-->
+            {% endfor %}
+                    </tbody>
+                    </table>
+                 {% else %}
+                <h2>{{ message }}</h2>
+                {% endif %}
+            </div>
+        </div>
+    </body>
+</html>
