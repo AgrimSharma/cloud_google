@@ -1,6 +1,6 @@
 import flask
 from flask import request
-import base64
+from base64 import b64encode
 import requests
 import json
 from flask import render_template
@@ -62,8 +62,7 @@ def predict():
         try:
             URL = flask.request.form["image"]
 
-            # image = base64.b64encode(urllib.request.urlopen(URL).read()).decode()
-            image = base64.b64encode(urllib.request.urlopen(URL).read()).decode()
+            image = b64encode(urllib.request.urlopen(URL).read()).decode()
             label = label_detection(image, access_token=token)
             all_labels = [dict(description=x['description'].upper(), percentage=round(x['score']*100, 2)) for x in label['labelAnnotations']]
             return render_template('index1.html', name=all_labels, message="Success")
